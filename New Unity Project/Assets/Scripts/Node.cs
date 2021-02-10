@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace SA
 {
-    public class Node : MonoBehaviour
+    public class Node
     {
         public int x;
         public int y;

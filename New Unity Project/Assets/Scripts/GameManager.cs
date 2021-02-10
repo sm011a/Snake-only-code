@@ -13,17 +13,32 @@ namespace SA
         public Color greenDark;
         public Color playerColor = Color.black;
 
+        public Transform cameraHolder;
+
         GameObject playerObj;
+        Node playerNode;
 
         private GameObject mapObject;
         private SpriteRenderer mapRenderer;
 
         Node[,] grid;
 
+        bool up, left, right, down;
+        bool movePlayer;
+
+        Direction curDirection;
+
+        public enum Direction
+        {
+            up, down, left, right
+        }
+
+        #region Init
         private void Start()
         {
             CreateMap();
             PlacePlayer();
+            PlaceCamera();
         }
 
         private void CreateMap()
@@ -81,7 +96,7 @@ namespace SA
 
             texture.Apply();
             Rect rect = new Rect(0, 0, maxWidthMap, maxHeigtMap);
-            Sprite sprite = Sprite.Create(texture, rect, Vector2.one * 0.5f, 1, 0, SpriteMeshType.FullRect);
+            Sprite sprite = Sprite.Create(texture, rect, Vector2.one, 1, 0, SpriteMeshType.FullRect);
             mapRenderer.sprite = sprite;
         }
 
@@ -91,10 +106,100 @@ namespace SA
             SpriteRenderer playerRender = playerObj.AddComponent<SpriteRenderer>();
             playerRender.sprite = CreateSprite(playerColor);
             playerRender.sortingOrder = 1;
-
-            playerObj.transform.position = GetNode(3, 3).worldPosition;
+            playerNode = GetNode(3, 3);
+            playerObj.transform.position = playerNode.worldPosition;
         }
 
+        private void PlaceCamera()
+        {
+            Node n = GetNode(maxWidthMap / 2, maxHeigtMap / 2);
+            cameraHolder.position = n.worldPosition;
+        }
+
+        #endregion
+
+        #region Update
+        private void Update()
+        {
+            GetInput();
+            SetPlayerDirection();
+        }
+
+        void GetInput()
+        {
+            up = Input.GetButtonDown("Up");
+            down = Input.GetButtonDown("Down");
+            left = Input.GetButtonDown("Left");
+            right = Input.GetButtonDown("Right");
+        }
+
+        private void SetPlayerDirection()
+        {
+            if (up)
+            {
+                curDirection = Direction.up;
+                movePlayer = true;
+            }
+            else if (down)
+            {
+                curDirection = Direction.down;
+                movePlayer = true;
+            }
+            else if (left)
+            {
+                curDirection = Direction.left;
+                movePlayer = true;
+            }
+            else if (right)
+            {
+                curDirection = Direction.right;
+                movePlayer = true;
+            }
+        }
+
+        private void MovePlayer()
+        {
+            if (!movePlayer)
+                return;
+
+
+            movePlayer = false;
+
+            int x = 0;
+            int y = 0;
+
+            switch (curDirection)
+            {
+                case Direction.up:
+                    y = 1;
+                    break;
+                case Direction.down:
+                    y = -1;
+                    break;
+                case Direction.left:
+                    x = -1;
+                    break;
+                case Direction.right:
+                    x = 1;
+                    break;
+
+            }
+
+            Node targetNode = GetNode(playerNode.x + x, playerNode.y + y);
+            if (targetNode == null)
+            {
+                //Game Over
+            }
+            else
+            {
+                playerObj.transform.position = targetNode.worldPosition;
+                playerNode = targetNode;
+            }
+        }
+
+        #endregion
+
+        #region Utilities
         Node GetNode(int x, int y)
         {
             if (x < 0 || x > maxWidthMap - 1 || y < 0 || y > maxHeigtMap - 1)
@@ -112,5 +217,6 @@ namespace SA
             Rect rect = new Rect(0, 0, 1, 1);
             return Sprite.Create(texture, rect, Vector2.one * 0.5f, 1, 0, SpriteMeshType.FullRect);
         }
+        #endregion
     }
 }
