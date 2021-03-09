@@ -96,7 +96,7 @@ namespace SA
 
             texture.Apply();
             Rect rect = new Rect(0, 0, maxWidthMap, maxHeigtMap);
-            Sprite sprite = Sprite.Create(texture, rect, Vector2.one, 1, 0, SpriteMeshType.FullRect);
+            Sprite sprite = Sprite.Create(texture, rect, Vector2.zero, 1, 0, SpriteMeshType.FullRect);
             mapRenderer.sprite = sprite;
         }
 
@@ -113,7 +113,10 @@ namespace SA
         private void PlaceCamera()
         {
             Node n = GetNode(maxWidthMap / 2, maxHeigtMap / 2);
-            cameraHolder.position = n.worldPosition;
+            Vector3 p = n.worldPosition;
+            p += Vector3.one * .5f;
+
+            cameraHolder.position = p;
         }
 
         #endregion
@@ -123,6 +126,7 @@ namespace SA
         {
             GetInput();
             SetPlayerDirection();
+            MovePlayer();
         }
 
         void GetInput()
@@ -215,7 +219,7 @@ namespace SA
             texture.Apply();
             texture.filterMode = FilterMode.Point;
             Rect rect = new Rect(0, 0, 1, 1);
-            return Sprite.Create(texture, rect, Vector2.one * 0.5f, 1, 0, SpriteMeshType.FullRect);
+            return Sprite.Create(texture, rect, Vector2.zero, 1, 0, SpriteMeshType.FullRect);
         }
         #endregion
     }
