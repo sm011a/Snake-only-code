@@ -1,6 +1,8 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
+using UnityEngine.Events;
 
 namespace SA
 {
@@ -33,25 +35,70 @@ namespace SA
 
         bool up, left, right, down;
 
+        int currentScore;
+        int highScore;
+
+        public bool isGameOver;
+        public bool isFirstInput;
         public float moveRate = 0.5f;
         float timer;
 
         Direction targetDirection;
         Direction curDirection;
 
+        public Text currentScoreText;
+        public Text highScoreText;
+
         public enum Direction
         {
             up, down, left, right
         }
 
+        public UnityEvent onStart;
+        public UnityEvent onGameOver;
+        public UnityEvent firstInput;
+        public UnityEvent onScore;
+
+
         #region Init
         private void Start()
         {
+            onStart.Invoke();
+        }
+
+        public void StartNewGame()
+        {
+            ClearReferences();
             CreateMap();
             PlacePlayer();
             PlaceCamera();
             CreateApple();
             targetDirection = Direction.right;
+            isGameOver = false;
+            currentScore = 0;
+            UpdateScore();
+        }
+
+        public void ClearReferences()
+        {
+            if (mapObject != null)
+                Destroy(mapObject);
+
+            if (playerObj != null)
+                Destroy(playerObj);
+
+            if (appleObj != null)
+                Destroy(appleObj);
+
+            foreach (var t in tail)
+            {
+                if (t.obj != null)
+                    Destroy(t.obj);
+            }
+
+            tail.Clear();
+            availableNodes.Clear();
+            grid = null;
         }
 
         private void CreateMap()
@@ -153,15 +200,35 @@ namespace SA
         #region Update
         private void Update()
         {
-            GetInput();
-            SetPlayerDirection();
-
-            timer += Time.deltaTime;
-            if (timer > moveRate)
+            if (isGameOver)
             {
-                timer = 0;
-                curDirection = targetDirection;
-                MovePlayer();
+                if (Input.GetKeyDown(KeyCode.R))
+                {
+                    onStart.Invoke();
+                }
+                return;
+            }
+
+            GetInput();
+            if (isFirstInput)
+            {
+                SetPlayerDirection();
+
+                timer += Time.deltaTime;
+                if (timer > moveRate)
+                {
+                    timer = 0;
+                    curDirection = targetDirection;
+                    MovePlayer();
+                }
+            }
+            else
+            {
+                if (up || down || left || right)
+                {
+                    isFirstInput = true;
+                    firstInput.Invoke();
+                }
             }
         }
 
@@ -227,12 +294,14 @@ namespace SA
             if (targetNode == null)
             {
                 //Game Over
+                onGameOver.Invoke();
             }
             else
             {
                 if (isTailNode(targetNode))
                 {
                     //GameOver
+                    onGameOver.Invoke();
                 }
                 else
                 {
@@ -261,6 +330,14 @@ namespace SA
 
                     if (isScore)
                     {
+                        currentScore++;
+                        if(currentScore>= highScore)
+                        {
+                            highScore = currentScore;
+                        }
+
+                        onScore.Invoke();
+
                         if (availableNodes.Count > 0)
                         {
                             RandomlyPlaceApple();
@@ -302,6 +379,18 @@ namespace SA
         #endregion
 
         #region Utilities
+
+        public void GameOver()
+        {
+            isGameOver = true;
+            isFirstInput = false;
+        }
+
+        public void UpdateScore()
+        {
+            currentScoreText.text = currentScore.ToString();
+            highScoreText.text = highScore.ToString();
+        }
 
         bool isOpposite(Direction d)
         {
